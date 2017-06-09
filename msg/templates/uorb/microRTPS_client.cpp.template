@@ -48,7 +48,72 @@ recv_topics = [s.short_name for idx, s in enumerate(spec) if scope[idx] == MsgSc
 #define BAUDRATE 460800
 #define DEVICE "/dev/ttyACM0"
 
+@[if recv_topics]@
+void *uart_reader_thread(void *data);
+@[end if]@
+
 extern "C" __EXPORT int micrortps_client_main(int argc, char *argv[]);
+
+static bool _should_exit_task = false;
+static uint32_t _received = 0;
+
+@[if recv_topics]@
+struct reader_data {
+    int uart_fd;
+    UART_node &uart_node;
+@[for topic in recv_topics]@
+        orb_advert_t @(topic)_pub;
+@[end for]@
+};
+
+void *uart_reader_thread(void *data)
+{
+    struct reader_data *reader_data = (struct reader_data *)data;
+
+    // We poll on UART, so we can use protocol splitter driver
+    struct pollfd poll_fd[1] = { };
+    poll_fd[0].fd = reader_data->uart_fd;
+    poll_fd[0].events = POLLIN;
+
+    // microBuffer to deserialize
+    char data_buffer[BUFFER_SIZE] = {};
+    struct microBuffer microBufferReader;
+    initDeserializedAlignedBuffer(data_buffer, BUFFER_SIZE, &microBufferReader);
+    // microCDR structs for managing the microBuffer
+    struct microCDR microCDRReader;
+    initMicroCDR(&microCDRReader, &microBufferReader);
+
+    // TODO maybe a method for each topic handler, so we don't need to
+    // declare all these here?
+@[for topic in recv_topics]@
+    struct @(topic)_s @(topic)_data { };
+@[end for]@
+
+    while (!_should_exit_task) {
+        int r = poll(poll_fd, 1, 100);
+        if (r == 1 && poll_fd[0].revents & POLLIN)
+        {
+            char topic_ID = 255;
+            while (0 < reader_data->uart_node.readFromUART(&topic_ID, data_buffer, BUFFER_SIZE))
+            {
+                switch (topic_ID)
+                {
+@[for topic in recv_topics]@
+                    case @(message_id(topic)):
+                        deserialize_@(topic)(&@(topic)_data, data_buffer, &microCDRReader);
+                        orb_publish(ORB_ID(@(topic)), reader_data->@(topic)_pub, &@(topic)_data);
+                        //printf("                >>[%d] %llu\n", @(message_id(topic)), @(topic)_data.timestamp);
+                        ++_received;
+                    break;
+@[end for]@
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+@[end if]@
 
 int micrortps_client_main(int argc, char *argv[])
 {
@@ -94,12 +159,13 @@ int micrortps_client_main(int argc, char *argv[])
     orb_set_interval(fds[@(idx)], update_time);
 @[end for]@
 @[end if]@
+
 @[if recv_topics]@
+    pthread_t _reader_thread{};
 
     /* advertise topics */
 @[for topic in recv_topics]@
-    struct @(topic)_s @(topic)_data;
-    memset(&@(topic)_data, 0, sizeof(@(topic)_data));
+    struct @(topic)_s @(topic)_data { };
     orb_advert_t @(topic)_pub = orb_advertise(ORB_ID(@(topic)), &@(topic)_data);
 @[end for]@
 @[end if]@
@@ -114,30 +180,38 @@ int micrortps_client_main(int argc, char *argv[])
 @[end if]@
 @[if recv_topics]@
 
-    // microBuffer to deserialized using the user defined buffer
-    struct microBuffer microBufferReader;
-    initDeserializedAlignedBuffer(data_buffer, BUFFER_SIZE, &microBufferReader);
-    // microCDR structs for managing the microBuffer
-    struct microCDR microCDRReader;
-    initMicroCDR(&microCDRReader, &microBufferReader);
+    /* Set up and start receiver thread */
+    pthread_attr_t reader_attr;
+
+    struct sched_param param;
+    (void)pthread_attr_getschedparam(&reader_attr, &param);
+    param.sched_priority = SCHED_PRIORITY_MAX - 80;
+    (void)pthread_attr_setschedparam(&reader_attr, &param);
+
+    pthread_attr_init(&reader_attr);
+    pthread_attr_setstacksize(&reader_attr, PX4_STACK_ADJUSTED(2100));
+
+    struct reader_data reader_data {
+        .uart_fd = uart_fd,
+        .uart_node = m_uartNode,
+@[for topic in recv_topics]@
+        .@(topic)_pub = @(topic)_pub,
+@[end for]@
+    };
+    pthread_create(&_reader_thread, &reader_attr, uart_reader_thread, &reader_data);
 @[end if]@
 
 @[if send_topics]@
     uint32_t length = 0;
     uint8_t seq = 0;
 @[end if]@
-    uint32_t sent = 0, received = 0;
+    uint32_t sent = 0;
     uint64_t total_send_lenght = 0;
-
-    // We poll on UART, so we can use protocol splitter driver
-    struct pollfd poll_fd[1] = { };
-    poll_fd[0].fd = uart_fd;
-    poll_fd[0].events = POLLIN;
 
     struct timespec begin;
     clock_gettime(0, &begin);
     int i = 0;
-    while (true)
+    while (!_should_exit_task)
     {
 @[if send_topics]@
         bool updated;
@@ -158,40 +232,19 @@ int micrortps_client_main(int argc, char *argv[])
 @[end for]@
 @[end if]@
 
-@[if recv_topics]@
-        int r = poll(poll_fd, 1, 100);
-        if (r == 1 && poll_fd[0].revents & POLLIN)
-        {
-            char topic_ID = 255;
-            while (0 < m_uartNode.readFromUART(&topic_ID, data_buffer, BUFFER_SIZE))
-            {
-                switch (topic_ID)
-                {
-@[for topic in recv_topics]@
-                    case @(message_id(topic)):
-                        deserialize_@(topic)(&@(topic)_data, data_buffer, &microCDRReader);
-                        orb_publish(ORB_ID(@(topic)), @(topic)_pub, &@(topic)_data);
-                        //printf("                >>[%d] %llu\n", @(message_id(topic)), @(topic)_data.timestamp);
-                        ++received;
-                    break;
-@[end for]@
-                }
-            }
-        }
-@[end if]@
-
         usleep(usleep_ms);
 
         // loop forever if informed loop number is negative
         if (loops > 0 && ++i >= loops)
-            break;
+            _should_exit_task = true;
     }
+    pthread_join(_reader_thread, nullptr);
 
     struct timespec end;
     clock_gettime(0, &end);
     double elapsed_secs2 = double(end.tv_sec - begin.tv_sec) + double(end.tv_nsec - begin.tv_nsec)/double(1000000000);
     printf("\nSENT: %d RECEIVED: %d in %d LOOPS\n%llu bytes in %.03f seconds sent %.02fKB/s\n",
-            sent, received, i, total_send_lenght, elapsed_secs2, (double)total_send_lenght/(1000*elapsed_secs2));
+            sent, _received, i, total_send_lenght, elapsed_secs2, (double)total_send_lenght/(1000*elapsed_secs2));
 
     PX4_INFO("exiting");
     fflush(stdout);
