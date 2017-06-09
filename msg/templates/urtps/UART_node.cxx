@@ -240,11 +240,12 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], uint32_t buff
 }
 
 
-int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t length, uint8_t seq)
+int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t length)
 {
     static struct Header header {
         .marker = {'>','>','>'}
     };
+    static uint8_t seq = 0;
 
     if (m_uart_filestream == -1) return 2;
 
@@ -254,7 +255,7 @@ int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
 
     int ret = 0;
     header.topic_ID = topic_ID;
-    header.seq = seq;
+    header.seq = seq++;
     header.payload_len = length;
     header.crc_h = (crc >> 8) & 0xff;
     header.crc_l = crc & 0xff;
