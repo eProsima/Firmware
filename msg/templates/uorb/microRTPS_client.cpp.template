@@ -101,7 +101,10 @@ void *uart_reader_thread(void *data)
 @[for topic in recv_topics]@
                     case @(message_id(topic)):
                         deserialize_@(topic)(&@(topic)_data, data_buffer, &microCDRReader);
-                        orb_publish(ORB_ID(@(topic)), reader_data->@(topic)_pub, &@(topic)_data);
+                        if (!reader_data->@(topic)_pub)
+                            reader_data->@(topic)_pub = orb_advertise(ORB_ID(@(topic)), &@(topic)_data);
+                        else
+                            orb_publish(ORB_ID(@(topic)), reader_data->@(topic)_pub, &@(topic)_data);
                         //printf("                >>[%d] %llu\n", @(message_id(topic)), @(topic)_data.timestamp);
                         ++_received;
                     break;
@@ -163,11 +166,6 @@ int micrortps_client_main(int argc, char *argv[])
 @[if recv_topics]@
     pthread_t _reader_thread{};
 
-    /* advertise topics */
-@[for topic in recv_topics]@
-    struct @(topic)_s @(topic)_data { };
-    orb_advert_t @(topic)_pub = orb_advertise(ORB_ID(@(topic)), &@(topic)_data);
-@[end for]@
 @[end if]@
 @[if send_topics]@
 
@@ -195,7 +193,7 @@ int micrortps_client_main(int argc, char *argv[])
         .uart_fd = uart_fd,
         .uart_node = m_uartNode,
 @[for topic in recv_topics]@
-        .@(topic)_pub = @(topic)_pub,
+        .@(topic)_pub = nullptr,
 @[end for]@
     };
     pthread_create(&_reader_thread, &reader_attr, uart_reader_thread, &reader_data);
