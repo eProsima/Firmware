@@ -31,25 +31,11 @@
 #
 ############################################################################
 px4_add_module(
-	MODULE modules__mavlink
-	MAIN mavlink
-	STACK_MAIN 2000
-	STACK_MAX 2500
-	COMPILE_FLAGS
+	MODULE drivers__protocol_splitter
+	MAIN protocol_splitter
+	STACK_MAIN 1200
 	SRCS
-		mavlink.c
-		mavlink_main.cpp
-		mavlink_mission.cpp
-		mavlink_parameters.cpp
-		mavlink_orb_subscription.cpp
-		mavlink_messages.cpp
-		mavlink_stream.cpp
-		mavlink_rate_limiter.cpp
-		mavlink_receiver.cpp
-		mavlink_ftp.cpp
-		mavlink_log_handler.cpp
-		mavlink_shell.cpp
-		mavlink_ulog.cpp
+		protocol_splitter.cpp
 	DEPENDS
 		platforms__common
 	)

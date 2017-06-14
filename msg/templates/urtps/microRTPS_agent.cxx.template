@@ -68,8 +68,10 @@ int main(int argc, char** argv)
 {
     UART_node m_uartNode;
     std::string uart = "/dev/ttyACM0";
+    uint32_t baud = 460800;
     if (argc > 1) uart = std::string(argv[1]);
-    if (0 != m_uartNode.init_uart(uart.c_str()))
+    if (argc > 2) baud = atoi(argv[1]);
+    if (m_uartNode.init_uart(uart.c_str(), baud) < 0)
     {
         printf("EXITING...\n");
         return -1;
@@ -79,10 +81,6 @@ int main(int argc, char** argv)
     if (argc > 2) usleep_ms = atoi(argv[2]);
 
     char data_buffer[BUFFER_SIZE] = {};
-@[if send_topics]@
-    char rx_buffer[BUFFER_SIZE] = {};
-    uint32_t rx_buff_pos = 0u;
-@[end if]@
 @[if recv_topics]@
 
     // Create subscribers
@@ -106,9 +104,6 @@ int main(int argc, char** argv)
     int read = 0;
     char topic_ID = 255;
 @[end if]@
-@[if recv_topics]@
-    uint8_t seq = 0;
-@[end if]@
     struct timespec begin;
     bool start = true, receiving = false;
     do
@@ -119,7 +114,7 @@ int main(int argc, char** argv)
             clock_gettime(0, &begin);
         }
         // Publish messages received from UART
-        while (0 < (read = m_uartNode.readFromUART(&topic_ID, data_buffer, rx_buffer, rx_buff_pos, BUFFER_SIZE)))
+        while (0 < (read = m_uartNode.readFromUART(&topic_ID, data_buffer, BUFFER_SIZE)))
         {
             switch (topic_ID)
             {
@@ -154,7 +149,7 @@ int main(int argc, char** argv)
             msg.serialize(scdr);
             size_t len = scdr.getSerializedDataLength();
             //printf("[%d]>> %lu\n", @(id), msg.timestamp());
-            m_uartNode.writeToUART((char) @(message_id(topic)), scdr.getBufferPointer(), len, seq++);
+            m_uartNode.writeToUART((char) @(message_id(topic)), scdr.getBufferPointer(), len);
             ++sent;
         }
 @[end for]@
