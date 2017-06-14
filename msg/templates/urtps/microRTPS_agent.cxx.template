@@ -70,15 +70,15 @@ int main(int argc, char** argv)
     std::string uart = "/dev/ttyACM0";
     uint32_t baud = 460800;
     if (argc > 1) uart = std::string(argv[1]);
-    if (argc > 2) baud = atoi(argv[1]);
-    if (0 != m_uartNode.init_uart(uart.c_str(), baud))
+    if (argc > 2) baud = atoi(argv[2]);
+    if (0 >= m_uartNode.init_uart(uart.c_str(), baud))
     {
         printf("EXITING...\n");
         return -1;
     }
 
     int usleep_ms = USLEEP_MS;
-    if (argc > 2) usleep_ms = atoi(argv[2]);
+    if (argc > 3) usleep_ms = atoi(argv[3]);
 
     char data_buffer[BUFFER_SIZE] = {};
 @[if recv_topics]@
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
             clock_gettime(0, &begin);
         }
         // Publish messages received from UART
-        while (0 < (read = m_uartNode.readFromUART(&topic_ID, data_buffer, BUFFER_SIZE)))
+        while (0 < (read = m_uartNode.readFromUART(&topic_ID, data_buffer)))
         {
             switch (topic_ID)
             {

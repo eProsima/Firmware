@@ -62,7 +62,7 @@ struct reader_data {
     int uart_fd;
     UART_node &uart_node;
 @[for topic in recv_topics]@
-        orb_advert_t @(topic)_pub;
+    orb_advert_t @(topic)_pub;
 @[end for]@
 };
 
@@ -145,12 +145,13 @@ void *uart_reader_thread(void *data)
     struct @(topic)_s @(topic)_data { };
 @[end for]@
 
+    _received = 0;
     while (!_should_exit_task) {
         int r = poll(poll_fd, 1, 100);
         if (r == 1 && poll_fd[0].revents & POLLIN)
         {
             char topic_ID = 255;
-            while (0 < reader_data->uart_node.readFromUART(&topic_ID, data_buffer, BUFFER_SIZE))
+            while (0 < reader_data->uart_node.readFromUART(&topic_ID, data_buffer))
             {
                 switch (topic_ID)
                 {
@@ -248,6 +249,7 @@ int micrortps_client_main(int argc, char *argv[])
     struct timespec begin;
     clock_gettime(0, &begin);
     int i = 0;
+    _should_exit_task = false;
     while (!_should_exit_task)
     {
 @[if send_topics]@

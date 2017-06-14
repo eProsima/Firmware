@@ -128,6 +128,7 @@ int UART_node::init_uart(const char * uart_name, uint32_t baudrate)
         usleep(1000);
     }
     if (flush) printf("flush\n");
+    else printf("no flush\n");
 
     return m_uart_filestream;
 }
@@ -140,14 +141,12 @@ uint8_t UART_node::close_uart()
     return 0;
 }
 
-int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], uint32_t buff_total_len)
+int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[])
 {
     if (-1 == m_uart_filestream || nullptr == out_buffer)
         return -1;
 
     // Read up to max_size characters from the port if they are there
-
-    //uint32_t &pos_to_write = rx_buff_pos;
 
     int len = read(m_uart_filestream, (void*)(rx_buffer + rx_buff_pos), sizeof(rx_buffer) - rx_buff_pos);
 
@@ -171,11 +170,14 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], uint32_t buff
     printf("\n");*/
 
     // We read some
-    if (rx_buff_pos < sizeof(struct Header))
+    size_t header_size = sizeof(struct Header);
+    if (rx_buff_pos < header_size)
+    {
         return 0; //but not enough
+    }
 
     uint32_t msg_start_pos = 0;
-    for (msg_start_pos = 0; msg_start_pos < rx_buff_pos - 3; ++msg_start_pos)
+    for (msg_start_pos = 0; msg_start_pos <= rx_buff_pos - header_size; ++msg_start_pos)
     {
         if ('>' == rx_buffer[msg_start_pos] && memcmp(rx_buffer + msg_start_pos, ">>>", 3) == 0)
         {
@@ -185,31 +187,29 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], uint32_t buff
     }
 
     // Start not found
-    if (msg_start_pos >= rx_buff_pos - 3)
+    if (msg_start_pos > rx_buff_pos - header_size)
     {
         //printf("start not found, pos %u\n", last_valid_pos);
-        rx_buff_pos = 0; // All we've read so far is garbage, drop it
+        printf("                                 (↓↓ %u)\n", rx_buff_pos - header_size + 1);
+        // We don't know nothing about last bytes read, we keep them.
+        memmove(rx_buffer, rx_buffer + rx_buff_pos - (header_size - 1), header_size - 1);
+        rx_buff_pos = header_size - 1;
         return -1;
     }
 
     /*
-     * [>,>,>,topic_ID,seq,payload_length,CRCHigh,CRCLow,payloadStart, ... ,payloadEnd]
+     * [>,>,>,topic_ID,seq,payload_length_H,payload_length_L,CRCHigh,CRCLow,payloadStart, ... ,payloadEnd]
      */
 
-    // Start detected but we should have a complete header, at least
-    if (rx_buff_pos - msg_start_pos < sizeof(struct Header *))
-        return 0;
-
     struct Header *header = (struct Header *)&rx_buffer[msg_start_pos];
-
-    //printf("payload_len %hhu\n", payload_len);
-
+    uint32_t payload_len = ((uint32_t)header->payload_len_h << 8) | header->payload_len_l;
     // We do not have a complete message yet
-    if(msg_start_pos + sizeof(struct Header) + header->payload_len > rx_buff_pos)
+    if(msg_start_pos + header_size + payload_len > rx_buff_pos)
     {
         // If there's garbage at the beginning, drop it
         if (msg_start_pos > 0)
         {
+            printf("                                 (↓ %u)\n", msg_start_pos);
             memmove(rx_buffer, rx_buffer + msg_start_pos, rx_buff_pos - msg_start_pos);
             rx_buff_pos -= msg_start_pos;
         }
@@ -220,21 +220,25 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], uint32_t buff
     // We have the whole message
     int ret;
     uint16_t read_crc = ((uint16_t)header->crc_h << 8) | header->crc_l;
-    uint16_t calc_crc = crc16((uint8_t*)rx_buffer + msg_start_pos + sizeof(struct Header), header->payload_len);
-    if (read_crc != calc_crc) {
+    uint16_t calc_crc = crc16((uint8_t*)rx_buffer + msg_start_pos + header_size, payload_len);
+    if (read_crc != calc_crc)
+    {
         printf("BAD CRC %u != %u\n", read_crc, calc_crc);
+        printf("                                 (↓ %lu)\n", header_size + payload_len);
         ret = -1;
-    } else {
+    }
+    else
+    {
         //printf("GOOD CRC %u == %u\n", read_crc, calc_crc);
         // copy message to outbuffer and set other return values
-        memmove(out_buffer, rx_buffer + msg_start_pos + sizeof(struct Header), header->payload_len);
+        memmove(out_buffer, rx_buffer + msg_start_pos + header_size, payload_len);
         *topic_ID = header->topic_ID;
-        ret = header->payload_len;
+        ret = payload_len;
     }
 
     // discard message from rx_buffer
-    rx_buff_pos -= sizeof(struct Header) + header->payload_len;
-    memmove(rx_buffer, rx_buffer + msg_start_pos + sizeof(struct Header) + header->payload_len, rx_buff_pos);
+    rx_buff_pos -= header_size + payload_len;
+    memmove(rx_buffer, rx_buffer + msg_start_pos + header_size + payload_len, rx_buff_pos);
 
     return ret;
 }
@@ -256,7 +260,8 @@ int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
     int ret = 0;
     header.topic_ID = topic_ID;
     header.seq = seq++;
-    header.payload_len = length;
+    header.payload_len_h = (length >> 8) & 0xff;
+    header.payload_len_l = length & 0xff;
     header.crc_h = (crc >> 8) & 0xff;
     header.crc_l = crc & 0xff;
     ret = write(m_uart_filestream, &header, sizeof(header));
@@ -264,7 +269,7 @@ int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
         goto err;
 
     ret = write(m_uart_filestream, buffer, length);
-    if (ret != sizeof(header))
+    if (ret != length)
         goto err;
 
     /*printf(">>>%hhd %c %c|", topic_ID, seq, (char)length);

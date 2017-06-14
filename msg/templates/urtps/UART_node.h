@@ -26,7 +26,7 @@ public:
 
     int init_uart(const char * uart_name, uint32_t baudrate);
     uint8_t close_uart();
-    int16_t readFromUART(char* topic_ID, char out_buffer[], uint32_t max_size);
+    int16_t readFromUART(char* topic_ID, char out_buffer[]);
     int16_t writeToUART(const char topic_ID, char buffer[], uint32_t length);
 
 protected:
@@ -44,7 +44,8 @@ private:
         char marker[3];
         uint8_t topic_ID;
         uint8_t seq;
-        uint8_t payload_len;
+        uint8_t payload_len_h;
+        uint8_t payload_len_l;
         uint8_t crc_h;
         uint8_t crc_l;
     };
