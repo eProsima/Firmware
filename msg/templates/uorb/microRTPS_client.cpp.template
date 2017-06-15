@@ -237,6 +237,7 @@ int micrortps_client_main(int argc, char *argv[])
         .@(topic)_pub = nullptr,
 @[end for]@
     };
+    _should_exit_task = false;
     pthread_create(&_reader_thread, &reader_attr, uart_reader_thread, &reader_data);
 @[end if]@
 
@@ -249,7 +250,6 @@ int micrortps_client_main(int argc, char *argv[])
     struct timespec begin;
     clock_gettime(0, &begin);
     int i = 0;
-    _should_exit_task = false;
     while (!_should_exit_task)
     {
 @[if send_topics]@
