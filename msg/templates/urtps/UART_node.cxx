@@ -1,4 +1,4 @@
-// Copyright 2016 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2017 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <string>
+#include <stdio.h>
 #include <errno.h>
 
 #include "UART_node.h"
@@ -188,6 +189,7 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], size_t buffer
     if (msg_start_pos > rx_buff_pos - sizeof(struct Header))
     {
         //printf("start not found, pos %u\n", last_valid_pos);
+        printf("                                 (↓↓ %u)\n", msg_start_pos);
         // All we've checked so far is garbage, drop it - but save unchecked bytes
         memmove(rx_buffer, rx_buffer + msg_start_pos, rx_buff_pos - msg_start_pos);
         rx_buff_pos = rx_buff_pos - msg_start_pos;
@@ -199,7 +201,6 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], size_t buffer
      */
 
     struct Header *header = (struct Header *)&rx_buffer[msg_start_pos];
-
     uint16_t payload_len = ((uint16_t)header->payload_len_h << 8) | header->payload_len_l;
 
     //printf("payload_len %hhu\n", payload_len);
@@ -211,7 +212,6 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], size_t buffer
         if (msg_start_pos > 0)
         {
             printf("                                 (↓ %u)\n", msg_start_pos);
-
             memmove(rx_buffer, rx_buffer + msg_start_pos, rx_buff_pos - msg_start_pos);
             rx_buff_pos -= msg_start_pos;
         }
