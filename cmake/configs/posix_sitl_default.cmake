@@ -168,6 +168,10 @@ set(config_module_list
 
 	# EKF
 	examples/ekf_att_pos_estimator
+
+	# micro-RTPS
+	lib/micro-CDR
+	examples/micrortps_client_udp
 )
 
 set(config_extra_builtin_cmds
