@@ -100,7 +100,7 @@ set(config_module_list
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB
-	modules/rtps
+	modules/rtps_udp
 
 	#
 	# Libraries
@@ -172,7 +172,6 @@ set(config_module_list
 
 	# micro-RTPS
 	lib/micro-CDR
-	modules/rtps_udp
 )
 
 set(config_extra_builtin_cmds
