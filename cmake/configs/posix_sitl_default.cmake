@@ -172,7 +172,7 @@ set(config_module_list
 
 	# micro-RTPS
 	lib/micro-CDR
-	examples/micrortps_client_udp
+	modules/rtps-udp
 )
 
 set(config_extra_builtin_cmds
