@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (c) 2015 PX4 Development Team. All rights reserved.
+#   Copyright (c) 2016 PX4 Development Team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,14 +31,48 @@
 #
 ############################################################################
 
+include_directories(udp)
+
+set(msg_out_path udp)
+set(topic_msg_path ${PX4_SOURCE_DIR}/msg)
+
+set(topic_files)
+foreach(topic ${config_rtps_send_topics} ${config_rtps_receive_topics})
+	list(APPEND topic_files ${PX4_SOURCE_DIR}/msg/${topic}.msg)
+endforeach()
+
+set(topic_bridge_files_out udp/microRTPS_UDP_client.cpp udp/RtpsTopics.cxx udp/RtpsTopics.h)
+foreach(topic ${config_rtps_send_topics})
+	list(APPEND topic_bridge_files_out ${msg_out_path}/${topic}_Publisher.cxx)
+	list(APPEND topic_bridge_files_out ${msg_out_path}/${topic}_Publisher.h)
+endforeach()
+
+foreach(topic ${config_rtps_receive_topics})
+	list(APPEND topic_bridge_files_out ${msg_out_path}/${topic}_Subscriber.cxx)
+	list(APPEND topic_bridge_files_out ${msg_out_path}/${topic}_Subscriber.h)
+endforeach()
+
+add_custom_command(OUTPUT ${topic_bridge_files_out}
+	COMMAND ${PYTHON_EXECUTABLE}
+	${PX4_SOURCE_DIR}/Tools/generate_microRTPS_UDP_bridge.py
+	-s ${config_rtps_send_topics}
+	-r ${config_rtps_receive_topics}
+	-t ${topic_msg_path}
+	-o ${msg_out_path}
+	DEPENDS ${DEPENDS} ${topic_files}
+	COMMENT "Generating RTPS UDP topic bridge"
+	VERBATIM
+	)
+
 px4_add_module(
-    MODULE examples__micrortps_client_udp
-    MAIN micrortps_client_udp
-    STACK_MAIN 4096
-    SRCS
-        UDP_node.cxx
-        micrortps_client_udp.cpp
-    DEPENDS
-        platforms__common
-    )
+	MODULE modules__rtps_udp
+	MAIN micrortps_client_udp
+	STACK_MAIN 4096
+	COMPILE_FLAGS
+	SRCS
+		udp/microRTPS_UDP_client.cpp
+		udp/UDP_node.cxx
+	DEPENDS
+		platforms__common
+	)
 # vim: set noet ft=cmake fenc=utf-8 ff=unix :
