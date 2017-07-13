@@ -100,6 +100,7 @@ set(config_module_list
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB
+	modules/rtps_udp
 
 	#
 	# Libraries
@@ -168,11 +169,22 @@ set(config_module_list
 
 	# EKF
 	examples/ekf_att_pos_estimator
+
+	# micro-RTPS
+	lib/micro-CDR
 )
 
 set(config_extra_builtin_cmds
 	serdis
 	sercon
+	)
+
+set(config_rtps_send_topics
+	sensor_baro
+	)
+
+set(config_rtps_receive_topics
+	sensor_combined
 	)
 
 # Default config_sitl_rcS_dir (posix_sitl_default), this is overwritten later

@@ -56,6 +56,7 @@ set(config_module_list
 	modules/simulator
 	modules/commander
 	modules/navigator
+	modules/rtps_udp
 
 	lib/controllib
 	lib/mathlib
@@ -70,6 +71,7 @@ set(config_module_list
 	lib/tailsitter_recovery
 	lib/version
 	lib/DriverFramework/framework
+	lib/micro-CDR
 
 	platforms/common
 	platforms/posix/px4_layer
