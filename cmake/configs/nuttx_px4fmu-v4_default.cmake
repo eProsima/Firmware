@@ -208,11 +208,11 @@ set(config_module_list
 )
 
 set(config_rtps_send_topics
-   sensor_baro
+   sensor_combined
    )
 
 set(config_rtps_receive_topics
-   sensor_combined
+   vehicle_command
    )
 
 
