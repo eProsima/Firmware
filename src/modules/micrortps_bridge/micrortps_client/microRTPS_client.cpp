@@ -19,6 +19,6 @@ extern "C" __EXPORT int micrortps_client_main(int argc, char *argv[]);
 
 int micrortps_client_main(int argc, char *argv[])
 {
-    PX4_ERR("Empty code. Nothing to be executed, please see src/modules/micrortps_bridge/README.md");
-    return -1;
+	PX4_ERR("Empty code. Nothing to be executed, please see src/modules/micrortps_bridge/README.md");
+	return -1;
 }
