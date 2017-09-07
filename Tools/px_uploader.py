@@ -585,6 +585,7 @@ class uploader(object):
 
 
 def main():
+    print("############################################################################################## MAIN")
 
     # Parse commandline arguments
     parser = argparse.ArgumentParser(description="Firmware uploader for the PX autopilot system.")

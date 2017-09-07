@@ -41,7 +41,7 @@ px4_add_module(
 		../common/board_dma_alloc.c
 		px4fmu_can.c
 		px4fmu_init.c
-		px4fmu_timer_config.c
+		#px4fmu_timer_config.c
 		px4fmu_spi.c
 		px4fmu_usb.c
 		px4fmu_led.c

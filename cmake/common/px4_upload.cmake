@@ -68,6 +68,7 @@
 #			)
 #
 function(px4_add_upload)
+    message("############################################################################################## px4_add_upload")
 	px4_parse_function_args(
 		NAME px4_add_upload
 		ONE_VALUE OS BOARD OUT BUNDLE

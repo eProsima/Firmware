@@ -37,14 +37,14 @@ set(SRCS
 	cpuload.c
 	pid/pid.c
 	airspeed.c
-	mavlink_log.c
-	rc_check.c
+	#mavlink_log.c
+	#rc_check.c
 	otp.c
 	board_serial.c
 	pwm_limit/pwm_limit.c
 	bson/tinybson.c
 	circuit_breaker.cpp
-	battery.cpp
+	#battery.cpp
 	hysteresis/hysteresis.cpp
 	)
 

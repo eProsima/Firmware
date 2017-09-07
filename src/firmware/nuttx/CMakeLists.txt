@@ -158,7 +158,8 @@ if(NOT ${BOARD} STREQUAL "sim")
 			px4_add_upload_aero(OUT upload OS ${OS} BOARD ${BOARD}
 				BUNDLE ${fw_file})
 		else()
-			px4_add_upload(OUT upload OS ${OS} BOARD ${BOARD}
+		    message("################################################################### ADD_UPLOAD OS ${OS} BOARD ${BOARD}")
+			px4_add_upload(OUT upload_nuttx OS ${OS} BOARD ${BOARD}
 				BUNDLE ${fw_file})
 		endif()
 	endif()

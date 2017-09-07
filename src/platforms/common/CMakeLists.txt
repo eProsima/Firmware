@@ -31,11 +31,11 @@
 #
 ############################################################################
 set(depends
-	msg_gen
+	#msg_gen
 	prebuild_targets
-	git_mavlink
-	git_uavcan
-	git_matrix
+	#git_mavlink
+	#git_uavcan
+	#git_matrix
 	)
 
 px4_add_module(

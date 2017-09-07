@@ -4,6 +4,59 @@ px4_nuttx_configure(HWCLASS m4 CONFIG nsh ROMFS y ROMFSROOT px4fmu_common)
 
 set(CMAKE_TOOLCHAIN_FILE ${PX4_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-none-eabi.cmake)
 
+set(config_module_list
+	#
+	# Board support modules
+	#
+	drivers/boards/px4fmu-v4
+	drivers/device
+	drivers/led
+	drivers/stm32
+
+	#
+	# System commands
+	#
+	systemcmds/top
+
+	#
+	# Library modules
+	#
+	modules/systemlib/param
+	modules/systemlib
+
+	#
+	# Libraries
+	#
+	platforms/nuttx
+
+	# had to add for cmake, not sure why wasn't in original config
+	platforms/common
+
+)
+
+add_custom_target(sercon)
+set_target_properties(sercon PROPERTIES
+	PRIORITY "SCHED_PRIORITY_DEFAULT"
+	MAIN "sercon"
+	STACK_MAIN "2048"
+	COMPILE_FLAGS "-Os")
+
+add_custom_target(serdis)
+set_target_properties(serdis PROPERTIES
+	PRIORITY "SCHED_PRIORITY_DEFAULT"
+	MAIN "serdis"
+	STACK_MAIN "2048"
+	COMPILE_FLAGS "-Os")
+
+
+########################################################################################
+#[[
+include(nuttx/px4_impl_nuttx)
+
+px4_nuttx_configure(HWCLASS m4 CONFIG nsh ROMFS y ROMFSROOT px4fmu_common)
+
+set(CMAKE_TOOLCHAIN_FILE ${PX4_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-none-eabi.cmake)
+
 set(config_uavcan_num_ifaces 1)
 
 set(config_module_list
@@ -232,3 +285,5 @@ set_target_properties(serdis PROPERTIES
 	MAIN "serdis"
 	STACK_MAIN "2048"
 	COMPILE_FLAGS "-Os")
+
+]]

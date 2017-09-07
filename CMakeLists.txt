@@ -189,22 +189,22 @@ execute_process(
 	WORKING_DIRECTORY ${PX4_SOURCE_DIR}
 	)
 
-px4_add_git_submodule(TARGET git_cmake_hexagon PATH "cmake/cmake_hexagon")
-px4_add_git_submodule(TARGET git_driverframework PATH "src/lib/DriverFramework")
-px4_add_git_submodule(TARGET git_ecl PATH "src/lib/ecl")
-px4_add_git_submodule(TARGET git_gazebo PATH "Tools/sitl_gazebo")
-px4_add_git_submodule(TARGET git_gazebo_flow PATH "Tools/sitl_gazebo/external/OpticalFlow")
-px4_add_git_submodule(TARGET git_gazebo_klt PATH "Tools/sitl_gazebo/external/OpticalFlow/external/klt_feature_tracker")
-px4_add_git_submodule(TARGET git_gencpp PATH "Tools/gencpp")
-px4_add_git_submodule(TARGET git_genmsg PATH "Tools/genmsg")
-px4_add_git_submodule(TARGET git_gps_devices PATH "src/drivers/gps/devices")
-px4_add_git_submodule(TARGET git_jmavsim PATH "Tools/jMAVSim")
-px4_add_git_submodule(TARGET git_matrix PATH "src/lib/matrix")
-px4_add_git_submodule(TARGET git_mavlink PATH "mavlink/include/mavlink/v1.0")
-px4_add_git_submodule(TARGET git_mavlink2 PATH "mavlink/include/mavlink/v2.0")
+#px4_add_git_submodule(TARGET git_cmake_hexagon PATH "cmake/cmake_hexagon")
+#px4_add_git_submodule(TARGET git_driverframework PATH "src/lib/DriverFramework")
+#px4_add_git_submodule(TARGET git_ecl PATH "src/lib/ecl")
+#px4_add_git_submodule(TARGET git_gazebo PATH "Tools/sitl_gazebo")
+#px4_add_git_submodule(TARGET git_gazebo_flow PATH "Tools/sitl_gazebo/external/OpticalFlow")
+#px4_add_git_submodule(TARGET git_gazebo_klt PATH "Tools/sitl_gazebo/external/OpticalFlow/external/klt_feature_tracker")
+#px4_add_git_submodule(TARGET git_gencpp PATH "Tools/gencpp")
+#px4_add_git_submodule(TARGET git_genmsg PATH "Tools/genmsg")
+#px4_add_git_submodule(TARGET git_gps_devices PATH "src/drivers/gps/devices")
+#px4_add_git_submodule(TARGET git_jmavsim PATH "Tools/jMAVSim")
+#px4_add_git_submodule(TARGET git_matrix PATH "src/lib/matrix")
+#px4_add_git_submodule(TARGET git_mavlink PATH "mavlink/include/mavlink/v1.0")
+#px4_add_git_submodule(TARGET git_mavlink2 PATH "mavlink/include/mavlink/v2.0")
 px4_add_git_submodule(TARGET git_nuttx PATH "NuttX")
-px4_add_git_submodule(TARGET git_uavcan PATH "src/modules/uavcan/libuavcan")
-px4_add_git_submodule(TARGET git_micro_cdr PATH "src/lib/micro-CDR")
+#px4_add_git_submodule(TARGET git_uavcan PATH "src/modules/uavcan/libuavcan")
+#px4_add_git_submodule(TARGET git_micro_cdr PATH "src/lib/micro-CDR")
 
 px4_create_git_hash_header()
 
@@ -250,7 +250,7 @@ foreach(cmd ${px4_required_interface})
 	endif()
 endforeach()
 
-set(px4_required_config config_module_list)
+#set(px4_required_config config_module_list)
 foreach(conf ${px4_required_config})
 	if (NOT DEFINED ${conf})
 		message(FATAL_ERROR "cmake/${config_module} must define ${conf}")
@@ -376,15 +376,15 @@ add_definitions(${definitions})
 
 include(common/px4_metadata)
 
-add_subdirectory(msg)
-px4_generate_messages(TARGET msg_gen
-	MSG_FILES ${msg_files}
-	OS ${OS}
-	INCLUDES ${msg_include_paths}
-	DEPENDS git_genmsg git_gencpp git_micro_cdr prebuild_targets
-	)
-include_directories("${PX4_SOURCE_DIR}/src/lib/micro-CDR/include"
-					"${PX4_BINARY_DIR}/src/lib/micro-CDR/include/microcdr")
+#add_subdirectory(msg)
+#px4_generate_messages(TARGET msg_gen
+#	MSG_FILES ${msg_files}
+#	OS ${OS}
+#	INCLUDES ${msg_include_paths}
+#	DEPENDS git_genmsg git_gencpp git_micro_cdr prebuild_targets
+#	)
+#include_directories("${PX4_SOURCE_DIR}/src/lib/micro-CDR/include"
+#					"${PX4_BINARY_DIR}/src/lib/micro-CDR/include/microcdr")
 
 px4_generate_airframes_xml(BOARD ${BOARD})
 

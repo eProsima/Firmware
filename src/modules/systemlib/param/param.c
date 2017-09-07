@@ -65,7 +65,7 @@
 #include "systemlib/uthash/utarray.h"
 #include "systemlib/bson/tinybson.h"
 
-//#define PARAM_NO_ORB ///< if defined, avoid uorb dependency. This disables publication of parameter_update on param change
+#define PARAM_NO_ORB ///< if defined, avoid uorb dependency. This disables publication of parameter_update on param change
 //#define PARAM_NO_AUTOSAVE ///< if defined, do not autosave (avoids LP work queue dependency)
 
 #if !defined(PARAM_NO_ORB)
