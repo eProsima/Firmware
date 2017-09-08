@@ -32,6 +32,8 @@ set(config_module_list
 	# had to add for cmake, not sure why wasn't in original config
 	platforms/common
 
+	examples/test
+
 )
 
 add_custom_target(sercon)

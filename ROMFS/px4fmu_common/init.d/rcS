@@ -36,6 +36,9 @@ set +e
 #
 # Mount the procfs.
 #
+
+#ARRANQUE!
+
 mount -t procfs /proc
 
 #
